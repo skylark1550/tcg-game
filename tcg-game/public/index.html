@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCG Game</title>
+  <style>
+    /* CSS Code */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e90ff, #ff7f50);
+      color: #fff;
+    }
+    .container {
+      width: 90%;
+      max-width: 400px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 5px;
+    }
+    .tabs button {
+      flex: 1;
+      padding: 10px;
+      margin: 2px;
+      border: none;
+      background: #444;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .tabs button.active {
+      background: #ff7f50;
+    }
+    .tabs button:hover {
+      background: #555;
+    }
+    .hidden {
+      display: none;
+    }
+    input, button {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+    }
+    input {
+      background: #333;
+      color: #fff;
+    }
+    button {
+      background: #ff7f50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ff5722;
+    }
+    .card {
+      background: #222;
+      border: 1px solid #444;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .card img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .card .name {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+    .card .type {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .card .rarity {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Developer Access Section -->
+  <div id="dev-access" class="hidden">
+    <label for="dev-password">Enter Dev Password:</label>
+    <input type="password" id="dev-password" />
+    <button onclick="checkDevPassword()">Access Dev Page</button>
+  </div>
+
+  <!-- Dev Page -->
+  <div id="dev-page" class="hidden">
+    <h2>Dev Page</h2>
+    <input type="password" id="new-dev-password" placeholder="New Dev Password" />
+    <button onclick="changeDevPassword()">Change Dev Password</button>
+    <button onclick="deleteAllAccounts()">Delete All Accounts</button>
+    <div id="account-deletion-message"></div>
+  </div>
+
+  <!-- Main Game Page -->
+  <div class="container">
+    <h1>TCG Game</h1>
+    <div id="main-screen" class="hidden">
+      <div class="tabs">
+        <button onclick="showTab('login')">Login</button>
+        <button onclick="showTab('create-account')">Create Account</button>
+        <button onclick="showTab('deck')">Deck</button>
+        <button onclick="showTab('store')">Store</button>
+        <button onclick="showTab('dev')">Dev</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Username" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+      </div>
+
+      <!-- Create Account Form -->
+      <div id="create-account" class="hidden">
+        <h2>Create Account</h2>
+        <input type="text" id="create-username" placeholder="Username" />
+        <input type="password" id="create-password" placeholder="Password" />
+        <button onclick="createAccount()">Create Account</button>
+      </div>
+
+      <!-- Deck -->
+      <div id="deck" class="hidden">
+        <h2>Your Cards</h2>
+        <div id="cards-container"></div>
+      </div>
+
+      <!-- Store -->
+      <div id="store" class="hidden">
+        <h2>Store</h2>
+        <button onclick="buyPack('water')">Buy Water Pack</button>
+        <button onclick="buyPack('fire')">Buy Fire Pack</button>
+        <button onclick="buyPack('earth')">Buy Earth Pack</button>
+        <button onclick="buyPack('sky')">Buy Sky Pack</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let TCGDevPassword = 'TCGDev'; // Default dev password
+    const MONSTER_TYPES = ["Water", "Fire", "Earth", "Sky"];
+    const COOL_NAMES = {
+      Water: [
+        "Aquafern", "Tidebreaker", "Hydroslash", "Oceanclaw", "Mistveil", "Hydroblade", "Froststorm", "Aqualash", "Torridwave", "Deepstream", 
+        "Seawisp", "Aquafrost", "Riptide", "Hydroflash", "Dewfall", "Tsunamisurge", "Crystalwave", "Waterwhirl", "Bluesurge", "Neptunebreaker",
+        "Coralstorm", "Wavestrider", "Oceanflare", "Vortexshard", "Bluewhisper"
+      ],
+      Fire: [
+        "Blazewing", "Flametail", "Infernoheart", "Firescorch", "Emberclash", "Flarestrike", "Blazeblast", "Volcanor", "Burnstrike", "Cinderfang",
+        "Flameflare", "Charstrike", "Firestorm", "Searblaze", "Lavasurge", "Emberwhip", "Redflare", "Pyroclash", "Flamereign", "Blazeheart",
+        "Ignition", "Firedawn", "Cinderstorm", "Infernalflare", "Pyroslash"
+      ],
+      Earth: [
+        "Stonefist", "Earthquake", "Boulderclaw", "Graniteshield", "Tremormight", "Cragstorm", "Terrabreak", "Rocksurge", "Quakeslam", "Terrashatter", 
+        "Giantstone", "Mudwall", "Earthflame", "Groundpound", "Volcanorock", "Quakeblade", "Rockcrusher", "Cavernwhirl", "Stoneflare", "Mudsweep",
+        "Shatterrock", "Tremorstrike", "Landgrip", "Earthquakeblast", "Rockshard"
+      ],
+      Sky: [
+        "Windwhisper", "Stormbringer", "Skyflare", "Thunderclash", "Skyshifter", "Windstrike", "Zephyrstorm", "Thunderflare", "Skydawn", "Stormfury", 
+        "Cloudburst", "Aerospirit", "Windblast", "Stormveil", "Tempestwhisper", "Breezesurge", "Zephyrwhirl", "Airstorm", "Wingsurge", "Cloudstrike", 
+        "Sundewind", "Skywhirl", "Stratoslash", "Windwhirl", "Stormshard"
+      ]
+    };
+
+    // Monster Generation Function
+    const MONSTER_ATTRIBUTES = Array.from({ length: 50 }, () => {
+      const type = MONSTER_TYPES[Math.floor(Math.random() * MONSTER_TYPES.length)];
+      const namePool = COOL_NAMES[type];
+      const name = namePool.splice(Math.floor(Math.random() * namePool.length), 1)[0];
+      const rarity = Math.random() > 0.8 ? "Legendary" : Math.random() > 0.5 ? "Rare" : "Common";
+      const baseStat = rarity === "Common" ? 50 : rarity === "Rare" ? 100 : 150;
+      const attack = Math.floor(Math.random() * 10 + baseStat);
+      const defense = Math.floor(Math.random() * 10 + baseStat);
+
+      let weakness;
+      switch (type) {
+        case "Water":
+          weakness = "Sky";
+          break;
+        case "Fire":
+          weakness = "Water";
+          break;
+        case "Earth":
+          weakness = "Fire";
+          break;
+        case "Sky":
+          weakness = "Earth";
+          break;
+      }
+
+      return { name, type, rarity, attack, defense, weakness };
+    });
+
+    // Initialize Account Data
+    let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    let loggedInUser = null;
+
+    function showTab(tabId) {
+      const tabs = ['login', 'create-account', 'deck', 'store', 'dev'];
+      tabs.forEach(tab => document.getElementById(tab).classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+      document.getElementById('main-screen').classList.remove('hidden');
+    }
+
+    function createAccount() {
+      const username = document.getElementById('create-username').value;
+      const password = document.getElementById('create-password').value;
+
+      if (accounts.find(acc => acc.username === username)) {
+        alert('Username already exists.');
+        return;
+      }
+
+      const newAccount = { username, password, deck: [] };
+      accounts.push(newAccount);
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+      alert('Account created successfully.');
+      showTab('login');
+    }
+
+    function login() {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+
+      loggedInUser = accounts.find(acc => acc.username === username && acc.password === password);
+
+      if (loggedInUser) {
+        alert('Logged in successfully.');
+        showTab('deck');
+        updateDeck();
+      } else {
+        alert('Invalid credentials.');
+      }
+    }
+
+    function updateDeck() {
+      const cardsContainer = document.getElementById('cards-container');
+      cardsContainer.innerHTML = '';
+
+      if (loggedInUser && loggedInUser.deck.length === 0) {
+        loggedInUser.deck = MONSTER_ATTRIBUTES.slice(0, 5); // Give default cards
+      }
+
+      loggedInUser.deck.forEach(card => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card';
+        cardDiv.innerHTML = `
+          <img src="https://via.placeholder.com/80" alt="${card.name}" />
+          <div class="name">${card.name}</div>
+          <div class="type">${card.type}</div>
+          <div class="rarity">${card.rarity}</div>
+          <div class="attack">ATK: ${card.attack}</div>
+          <div class="defense">DEF: ${card.defense}</div>
+        `;
+        cardsContainer.appendChild(cardDiv);
+      });
+    }
+
+    function buyPack(type) {
+      const newCards = MONSTER_ATTRIBUTES.filter(card => card.type === type);
+      const pack = newCards.slice(0, 3);
+      loggedInUser.deck.push(...pack);
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+      alert(`Bought ${type} pack!`);
+      updateDeck();
+    }
+
+    // Developer page functions
+    function checkDevPassword() {
+      const devPasswordInput = document.getElementById('dev-password').value;
+
+      if (devPasswordInput === TCGDevPassword) {
+        document.getElementById('dev-access').classList.add('hidden');
+        document.getElementById('dev-page').classList.remove('hidden');
+      } else {
+        alert('Incorrect password.');
+      }
+    }
+
+    function changeDevPassword() {
+      const newPassword = document.getElementById('new-dev-password').value;
+      TCGDevPassword = newPassword;
+      alert('Dev password changed!');
+    }
+
+    function deleteAllAccounts() {
+      accounts = [];
+      localStorage.setItem('accounts', JSON.stringify(accounts));
+      document.getElementById('account-deletion-message').innerHTML = "All accounts have been deleted.";
+    }
+
+    // Initial setup
+    showTab('login');
+  </script>
+</body>
+</html>
